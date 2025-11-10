@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,7 +25,6 @@ const Navigation = () => {
   const navItems = [
     { label: "About", id: "about" },
     { label: "Skills", id: "skills" },
-    { label: "Projects", id: "projects" },
     { label: "Contact", id: "contact" },
   ];
 
@@ -40,13 +38,8 @@ const Navigation = () => {
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent hover:opacity-80 transition-opacity"
-          >
-            Portfolio
-          </button>
+          {/* Logo removed - left side kept as spacer */}
+          <div />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
