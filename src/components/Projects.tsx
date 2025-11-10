@@ -30,7 +30,7 @@ const Projects = () => {
   ];
 
   return (
-    <section className="py-24 px-6 bg-background">
+    <section id="projects" className="py-24 px-6 bg-background">
       <div className="container mx-auto max-w-6xl">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-4">
           Featured <span className="bg-gradient-primary bg-clip-text text-transparent">Projects</span>
