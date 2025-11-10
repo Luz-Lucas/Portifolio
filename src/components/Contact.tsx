@@ -20,7 +20,7 @@ const Contact = () => {
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow"
             asChild
           >
-            <a href="mailto:your.email@example.com">
+            <a href="mailto:lucaspmluz@hotmail.com">
               <Mail className="w-5 h-5 mr-2" />
               Email Me
             </a>
@@ -32,7 +32,7 @@ const Contact = () => {
             className="border-border hover:bg-secondary"
             asChild
           >
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/Luz-Lucas" target="_blank" rel="noopener noreferrer">
               <Github className="w-5 h-5 mr-2" />
               GitHub
             </a>
@@ -44,7 +44,7 @@ const Contact = () => {
             className="border-border hover:bg-secondary"
             asChild
           >
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.linkedin.com/in/lucas-luz-1b0258324/" target="_blank" rel="noopener noreferrer">
               <Linkedin className="w-5 h-5 mr-2" />
               LinkedIn
             </a>
