@@ -74,12 +74,12 @@ function RadialIntro({
       ...arms.map((el): [Element, Record<string, unknown>, Transition] => [
         el,
         { rotate: angleOf(el) },
-        { ...transition, at: 0 },
+        { ...transition, at: 0 } as unknown as Transition,
       ]),
       ...imgs.map((img): [Element, Record<string, unknown>, Transition] => [
         img,
         { rotate: -angleOf(armOfImg(img)!), opacity: 1 },
-        { ...transition, at: 0 },
+        { ...transition, at: 0 } as unknown as Transition,
       ]),
     ];
 
