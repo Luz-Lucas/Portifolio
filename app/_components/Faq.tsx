@@ -1,4 +1,8 @@
-const faqs = [
+"use client";
+
+import { memo } from "react";
+
+const FAQS = [
   {
     question: "How do you balance college with development work at CP2?",
     answer:
@@ -21,7 +25,7 @@ const faqs = [
   },
 ];
 
-export function Faq() {
+function FaqComponent() {
   return (
     <section id="faq" className="px-6 py-20">
       <div className="mx-auto w-full max-w-6xl space-y-10">
@@ -33,7 +37,7 @@ export function Faq() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {faqs.map((faq) => (
+          {FAQS.map((faq) => (
             <article
               key={faq.question}
               className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3"
@@ -47,3 +51,5 @@ export function Faq() {
     </section>
   );
 }
+
+export const Faq = memo(FaqComponent);

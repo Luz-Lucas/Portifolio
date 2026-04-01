@@ -64,9 +64,14 @@ function AccordionButton({
     >
       {(bag) => (
         <>
-          {typeof children === 'function' ? children(bag) : children}
+          <span className="flex-1">
+            {typeof children === 'function' ? children(bag) : children}
+          </span>
           {showArrow && (
-            <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+            <ChevronDownIcon
+              className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200"
+              aria-hidden="true"
+            />
           )}
         </>
       )}

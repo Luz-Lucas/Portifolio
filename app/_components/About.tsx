@@ -1,6 +1,9 @@
+"use client";
+
+import { memo } from "react";
 import Image from "next/image";
 
-export function About() {
+function AboutComponent() {
   return (
     <section id="about" className="px-6 py-20">
       <div className="mx-auto w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -13,6 +16,7 @@ export function About() {
             className="object-contain opacity-80"
             quality={100}
           />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
         </div>
         <div className="space-y-6 text-center lg:text-left">
           <p className="text-sm uppercase tracking-[0.3em] text-gray-400">About me</p>
@@ -28,3 +32,5 @@ export function About() {
     </section>
   );
 }
+
+export const About = memo(AboutComponent);

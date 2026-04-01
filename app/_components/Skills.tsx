@@ -1,4 +1,8 @@
-const skillGroups = [
+"use client";
+
+import { memo } from "react";
+
+const SKILL_GROUPS = [
   {
     title: "Front-End Development",
     description:
@@ -37,7 +41,7 @@ const skillGroups = [
   },
 ];
 
-export function Skills() {
+function SkillsComponent() {
   return (
     <section id="skills" className="px-6 py-20">
       <div className="mx-auto w-full max-w-6xl space-y-10">
@@ -49,7 +53,7 @@ export function Skills() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {skillGroups.map((group) => (
+          {SKILL_GROUPS.map((group) => (
             <article
               key={group.title}
               className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4"
@@ -73,3 +77,5 @@ export function Skills() {
     </section>
   );
 }
+
+export const Skills = memo(SkillsComponent);

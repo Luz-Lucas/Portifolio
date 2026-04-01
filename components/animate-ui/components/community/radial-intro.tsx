@@ -5,7 +5,6 @@ import {
   LayoutGroup,
   motion,
   useAnimate,
-  delay,
   type Transition,
   type AnimationSequence,
 } from 'motion/react';
@@ -23,7 +22,6 @@ type OrbitItem = {
 };
 
 const transition: Transition = {
-  delay: 0,
   stiffness: 300,
   damping: 35,
   type: 'spring',
@@ -52,66 +50,80 @@ function RadialIntro({
 }: ComponentProps) {
   const step = 360 / orbitItems.length;
   const [scope, animate] = useAnimate();
+  const stopsRef = React.useRef<Array<() => void>>([]);
 
   React.useEffect(() => {
     const root = scope.current;
     if (!root) return;
 
-    // get arm and image elements
     const arms = qsa(root, '[data-arm]');
     const imgs = qsa(root, '[data-arm-image]');
-    const stops: Array<() => void> = [];
+    stopsRef.current = [];
 
-    // image lift-in
-    delay(() => animate(imgs, { top: 0 }, transition), 250);
+    const timers: number[] = [];
 
-    // build sequence for orbit placement
+    // Image lift-in animation
+    timers.push(
+      window.setTimeout(() => {
+        void animate(imgs, { top: 0 }, transition);
+      }, 250)
+    );
+
+    // Build sequence for orbit placement
     const orbitPlacementSequence: AnimationSequence = [
-      ...arms.map((el): [Element, Record<string, any>, any] => [
+      ...arms.map((el): [Element, Record<string, unknown>, Transition] => [
         el,
         { rotate: angleOf(el) },
         { ...transition, at: 0 },
       ]),
-      ...imgs.map((img): [Element, Record<string, any>, any] => [
+      ...imgs.map((img): [Element, Record<string, unknown>, Transition] => [
         img,
         { rotate: -angleOf(armOfImg(img)!), opacity: 1 },
         { ...transition, at: 0 },
       ]),
     ];
 
-    // play placement sequence
-    delay(() => animate(orbitPlacementSequence), 700);
+    timers.push(
+      window.setTimeout(() => {
+        void animate(orbitPlacementSequence);
+      }, 700)
+    );
 
-    // start continuous spin for arms and images
-    delay(() => {
-      // arms spin clockwise
-      arms.forEach((el) => {
-        const angle = angleOf(el);
-        const ctrl = animate(el, { rotate: [angle, angle + 360] }, spinConfig);
-        stops.push(() => ctrl.cancel());
-      });
+    // Start continuous spin
+    timers.push(
+      window.setTimeout(() => {
+        // Arms spin clockwise
+        arms.forEach((el) => {
+          const angle = angleOf(el);
+          const ctrl = animate(el, { rotate: [angle, angle + 360] }, spinConfig);
+          stopsRef.current.push(() => ctrl.cancel());
+        });
 
-      // images counter-spin to stay upright
-      imgs.forEach((img) => {
-        const arm = armOfImg(img);
-        const angle = arm ? angleOf(arm) : 0;
-        const ctrl = animate(
-          img,
-          { rotate: [-angle, -angle - 360] },
-          spinConfig,
-        );
-        stops.push(() => ctrl.cancel());
-      });
-    }, 1300);
+        // Images counter-spin to stay upright
+        imgs.forEach((img) => {
+          const arm = armOfImg(img);
+          const angle = arm ? angleOf(arm) : 0;
+          const ctrl = animate(
+            img,
+            { rotate: [-angle, -angle - 360] },
+            spinConfig,
+          );
+          stopsRef.current.push(() => ctrl.cancel());
+        });
+      }, 1300)
+    );
 
-    return () => stops.forEach((stop) => stop());
-  }, []);
+    return () => {
+      timers.forEach(clearTimeout);
+      stopsRef.current.forEach((stop) => stop());
+    };
+  }, [scope, animate, step]);
 
   return (
     <LayoutGroup>
       <motion.div
         ref={scope}
-        className="relative overflow-visible"
+        className="relative overflow-visible will-change-transform"
         style={{ width: stageSize, height: stageSize }}
         initial={false}
       >
@@ -126,16 +138,18 @@ function RadialIntro({
           >
             <motion.img
               data-arm-image
-              className="rounded-full object-fill absolute left-1/2 top-1/2 aspect-square translate -translate-x-1/2"
+              className="rounded-full object-fill absolute left-1/2 -translate-x-1/2 will-change-transform"
               style={{
                 width: imageSize,
                 height: imageSize,
                 opacity: i === 0 ? 1 : 0,
+                top: '50%',
               }}
               src={item.src}
               alt={item.name}
               draggable={false}
               layoutId={`arm-img-${item.id}`}
+              loading="lazy"
             />
           </motion.div>
         ))}

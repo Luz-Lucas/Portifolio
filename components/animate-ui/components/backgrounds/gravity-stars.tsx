@@ -31,12 +31,14 @@ type Particle = {
   opacity: number;
   baseOpacity: number;
   mass: number;
-  glowMultiplier?: number;
-  glowVelocity?: number;
+  glowMultiplier: number;
+  glowVelocity: number;
 };
 
+const MAX_STARS = 500;
+
 function GravityStarsBackground({
-  starsCount = 999999999999999,
+  starsCount: rawStarsCount = 100,
   starsSize = 2,
   starsOpacity = 0.75,
   glowIntensity = 15,
@@ -50,9 +52,12 @@ function GravityStarsBackground({
   className,
   ...props
 }: GravityStarsProps) {
+  // Clamp stars count to prevent performance issues
+  const starsCount = Math.min(Math.max(1, rawStarsCount), MAX_STARS);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const animRef = React.useRef<number | null>(null);
+  const lastTimeRef = React.useRef<number>(0);
   const starsRef = React.useRef<Particle[]>([]);
   const mouseRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dpr, setDpr] = React.useState(1);
@@ -137,28 +142,50 @@ function GravityStarsBackground({
     [],
   );
 
+  // Pre-calculate constants outside the loop
+  const GRAVITY_SCALE = 0.001;
+  const EASE_IN = 0.15;
+  const EASE_OUT = 0.08;
+  const SPRING_K = 0.2;
+  const SPRING_DAMP_IN = 0.85;
+  const SPRING_DAMP_OUT = 0.9;
+  const VELOCITY_DAMPING = 0.999;
+  const RANDOM_JITTER = 0.001;
+  const OPACITY_DECAY = 0.02;
+  const MIN_OPACITY_SCALE = 0.3;
+
   const updateStars = React.useCallback(() => {
     const w = canvasSize.width;
     const h = canvasSize.height;
     const mouse = mouseRef.current;
+    const stars = starsRef.current;
+    const starCount = stars.length;
 
-    for (let i = 0; i < starsRef.current.length; i++) {
-      const p = starsRef.current[i];
+    // Cache frequently accessed values
+    const mInf = mouseInfluence;
+    const gStr = gravityStrength * GRAVITY_SCALE;
+    const isAttract = mouseGravity === 'attract';
 
+    for (let i = 0; i < starCount; i++) {
+      const p = stars[i];
+
+      // Mouse interaction (only calculate if mouse has moved from origin)
       const dx = mouse.x - p.x;
       const dy = mouse.y - p.y;
-      const dist = Math.hypot(dx, dy);
+      const distSq = dx * dx + dy * dy;
+      const mInfSq = mInf * mInf;
 
-      if (dist < mouseInfluence && dist > 0) {
-        const force = (mouseInfluence - dist) / mouseInfluence;
+      if (distSq < mInfSq && distSq > 0) {
+        const dist = Math.sqrt(distSq);
+        const force = (mInf - dist) / mInf;
         const nx = dx / dist;
         const ny = dy / dist;
-        const g = force * (gravityStrength * 0.001);
+        const g = force * gStr;
 
-        if (mouseGravity === 'attract') {
+        if (isAttract) {
           p.vx += nx * g;
           p.vy += ny * g;
-        } else if (mouseGravity === 'repel') {
+        } else {
           p.vx -= nx * g;
           p.vy -= ny * g;
         }
@@ -166,59 +193,55 @@ function GravityStarsBackground({
         p.opacity = Math.min(1, p.baseOpacity + force * 0.4);
 
         const targetGlow = 1 + force * 2;
-        const currentGlow = p.glowMultiplier || 1;
-
         if (glowAnimation === 'instant') {
           p.glowMultiplier = targetGlow;
         } else if (glowAnimation === 'ease') {
-          const ease = 0.15;
-          p.glowMultiplier = currentGlow + (targetGlow - currentGlow) * ease;
+          p.glowMultiplier += (targetGlow - p.glowMultiplier) * EASE_IN;
         } else {
-          const spring = (targetGlow - currentGlow) * 0.2;
-          const damping = 0.85;
-          p.glowVelocity = (p.glowVelocity || 0) * damping + spring;
-          p.glowMultiplier = currentGlow + (p.glowVelocity || 0);
+          const spring = (targetGlow - p.glowMultiplier) * SPRING_K;
+          p.glowVelocity = p.glowVelocity * SPRING_DAMP_IN + spring;
+          p.glowMultiplier += p.glowVelocity;
         }
       } else {
-        p.opacity = Math.max(p.baseOpacity * 0.3, p.opacity - 0.02);
+        p.opacity = Math.max(p.baseOpacity * MIN_OPACITY_SCALE, p.opacity - OPACITY_DECAY);
         const targetGlow = 1;
-        const currentGlow = p.glowMultiplier || 1;
         if (glowAnimation === 'instant') {
           p.glowMultiplier = targetGlow;
         } else if (glowAnimation === 'ease') {
-          const ease = 0.08;
-          p.glowMultiplier = Math.max(
-            1,
-            currentGlow + (targetGlow - currentGlow) * ease,
-          );
+          p.glowMultiplier = Math.max(1, p.glowMultiplier + (targetGlow - p.glowMultiplier) * EASE_OUT);
         } else {
-          const spring = (targetGlow - currentGlow) * 0.15;
-          const damping = 0.9;
-          p.glowVelocity = (p.glowVelocity || 0) * damping + spring;
-          p.glowMultiplier = Math.max(1, currentGlow + (p.glowVelocity || 0));
+          const spring = (targetGlow - p.glowMultiplier) * 0.15;
+          p.glowVelocity = p.glowVelocity * SPRING_DAMP_OUT + spring;
+          p.glowMultiplier = Math.max(1, p.glowMultiplier + p.glowVelocity);
         }
       }
 
+      // Star-to-star interaction (expensive - only if enabled)
       if (starsInteraction) {
-        for (let j = i + 1; j < starsRef.current.length; j++) {
-          const o = starsRef.current[j];
+        for (let j = i + 1; j < starCount; j++) {
+          const o = stars[j];
           const dx2 = o.x - p.x;
           const dy2 = o.y - p.y;
-          const d = Math.hypot(dx2, dy2);
+          const dSq = dx2 * dx2 + dy2 * dy2;
           const minD = p.size + o.size + 5;
-          if (d < minD && d > 0) {
+
+          if (dSq < minD * minD && dSq > 0) {
+            const d = Math.sqrt(dSq);
             if (starsInteractionType === 'bounce') {
               const nx = dx2 / d;
               const ny = dy2 / d;
               const rvx = p.vx - o.vx;
               const rvy = p.vy - o.vy;
               const speed = rvx * nx + rvy * ny;
-              if (speed < 0) continue;
-              const impulse = (2 * speed) / (p.mass + o.mass);
-              p.vx -= impulse * o.mass * nx;
-              p.vy -= impulse * o.mass * ny;
-              o.vx += impulse * p.mass * nx;
-              o.vy += impulse * p.mass * ny;
+              if (speed >= 0) {
+                const impulse = (2 * speed) / (p.mass + o.mass);
+                const ix = impulse * o.mass * nx;
+                const iy = impulse * o.mass * ny;
+                p.vx -= ix;
+                p.vy -= iy;
+                o.vx += impulse * p.mass * nx;
+                o.vy += impulse * p.mass * ny;
+              }
               const overlap = minD - d;
               const sx = nx * overlap * 0.5;
               const sy = ny * overlap * 0.5;
@@ -228,8 +251,8 @@ function GravityStarsBackground({
               o.y += sy;
             } else {
               const mergeForce = (minD - d) / minD;
-              p.glowMultiplier = (p.glowMultiplier || 1) + mergeForce * 0.5;
-              o.glowMultiplier = (o.glowMultiplier || 1) + mergeForce * 0.5;
+              p.glowMultiplier += mergeForce * 0.5;
+              o.glowMultiplier += mergeForce * 0.5;
               const af = mergeForce * 0.01;
               p.vx += dx2 * af;
               p.vy += dy2 * af;
@@ -240,19 +263,21 @@ function GravityStarsBackground({
         }
       }
 
+      // Update position
       p.x += p.vx;
       p.y += p.vy;
 
-      p.vx += (Math.random() - 0.5) * 0.001;
-      p.vy += (Math.random() - 0.5) * 0.001;
+      // Random jitter and damping
+      p.vx += (Math.random() - 0.5) * RANDOM_JITTER;
+      p.vy += (Math.random() - 0.5) * RANDOM_JITTER;
+      p.vx *= VELOCITY_DAMPING;
+      p.vy *= VELOCITY_DAMPING;
 
-      p.vx *= 0.999;
-      p.vy *= 0.999;
-
-      if (p.x < 0) p.x = w;
-      if (p.x > w) p.x = 0;
-      if (p.y < 0) p.y = h;
-      if (p.y > h) p.y = 0;
+      // Wrap around edges
+      if (p.x < 0) p.x += w;
+      else if (p.x > w) p.x -= w;
+      if (p.y < 0) p.y += h;
+      else if (p.y > h) p.y -= h;
     }
   }, [
     canvasSize.width,
@@ -284,11 +309,19 @@ function GravityStarsBackground({
     [dpr, glowIntensity, readColor],
   );
 
-  const animate = React.useCallback(() => {
+  const animate = React.useCallback((timestamp: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Throttle to ~30fps for better performance (skip every other frame)
+    if (timestamp - lastTimeRef.current < 33) {
+      animRef.current = requestAnimationFrame(animate);
+      return;
+    }
+
+    lastTimeRef.current = timestamp;
     updateStars();
     drawStars(ctx);
     animRef.current = requestAnimationFrame(animate);
@@ -336,6 +369,7 @@ function GravityStarsBackground({
 
   React.useEffect(() => {
     if (animRef.current) cancelAnimationFrame(animRef.current);
+    lastTimeRef.current = performance.now();
     animRef.current = requestAnimationFrame(animate);
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);

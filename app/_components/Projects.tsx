@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Accordion,
   AccordionItem,
@@ -7,7 +8,7 @@ import {
   AccordionPanel,
 } from "@/components/animate-ui/components/headless/accordion";
 
-export function Projects() {
+function ProjectsComponent() {
   return (
     <section id="projects" className="px-6 py-20">
       <div className="mx-auto w-full max-w-4xl space-y-8">
@@ -51,3 +52,5 @@ export function Projects() {
     </section>
   );
 }
+
+export const Projects = memo(ProjectsComponent);
