@@ -73,12 +73,3 @@ export async function POST(request: NextRequest) {
     { status: 200 }
   );
 }
-  }
-
-  // Success response
-  console.log("Email sent successfully:", data?.id);
-  return NextResponse.json(
-    { success: true, message: "Email sent successfully", id: data?.id },
-    { status: 200 }
-  );
-}
