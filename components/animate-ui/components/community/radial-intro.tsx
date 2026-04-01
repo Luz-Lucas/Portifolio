@@ -70,20 +70,18 @@ function RadialIntro({
     );
 
     // Build sequence for orbit placement
-    const orbitPlacementSequence: AnimationSequence = [
+    const orbitPlacementSequence = [
       ...arms.map((el) => [
         el,
         { rotate: angleOf(el) },
-        transition,
-        { at: 0 },
+        { ...transition, at: 0 },
       ]),
       ...imgs.map((img) => [
         img,
         { rotate: -angleOf(armOfImg(img)!), opacity: 1 },
-        transition,
-        { at: 0 },
+        { ...transition, at: 0 },
       ]),
-    ];
+    ] as AnimationSequence;
 
     timers.push(
       window.setTimeout(() => {
