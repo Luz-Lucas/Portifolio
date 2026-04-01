@@ -6,7 +6,8 @@ export async function POST(request: NextRequest) {
     console.log("📧 Contact form request received");
     console.log("🔍 Checking environment variables...");
     console.log("RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
-    console.log("RESEND_API_KEY value:", process.env.RESEND_API_KEY ? "***[MASKED]***" : "NOT SET");
+    console.log("RESEND_API_KEY value:", process.env.RESEND_API_KEY ? `***${process.env.RESEND_API_KEY.slice(-4)}` : "NOT SET");
+    console.log("All env vars keys:", Object.keys(process.env).slice(0, 20));
 
     // Validate API key is configured
     if (!process.env.RESEND_API_KEY) {
