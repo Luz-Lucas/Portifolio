@@ -4,10 +4,14 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     console.log("📧 Contact form request received");
+    console.log("🔍 Checking environment variables...");
+    console.log("RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
+    console.log("RESEND_API_KEY value:", process.env.RESEND_API_KEY ? "***[MASKED]***" : "NOT SET");
 
     // Validate API key is configured
     if (!process.env.RESEND_API_KEY) {
-      console.error("❌ RESEND_API_KEY is not configured");
+      console.error("❌ RESEND_API_KEY is not configured in environment");
+      console.error("Available env vars:", Object.keys(process.env).filter(key => key.includes('RESEND') || key.includes('API')));
       return NextResponse.json(
         { error: "Email service not configured. Please contact the site owner." },
         { status: 500 }
