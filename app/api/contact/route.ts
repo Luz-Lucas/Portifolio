@@ -3,11 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Generate idempotency key to prevent duplicate emails on retry
-function generateIdempotencyKey(email: string, timestamp: number): string {
-  return `contact-form/${email}/${timestamp}`;
-}
-
 export async function POST(request: NextRequest) {
   // Validate API key is configured
   if (!process.env.RESEND_API_KEY) {
@@ -38,9 +33,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Generate idempotency key for retry safety
-  const idempotencyKey = generateIdempotencyKey(email, Date.now());
-
   // Send email using Resend SDK
   const { data, error } = await resend.emails.send({
     from: "onboarding@resend.dev", // Replace with your verified domain: "Lucas <noreply@yourdomain.com>"
@@ -63,7 +55,6 @@ export async function POST(request: NextRequest) {
         </p>
       </div>
     `,
-    idempotencyKey,
   });
 
   // Handle Resend API errors
@@ -73,6 +64,15 @@ export async function POST(request: NextRequest) {
       { error: "Failed to send email. Please try again later." },
       { status: 500 }
     );
+  }
+
+  // Success response
+  console.log("Email sent successfully:", data?.id);
+  return NextResponse.json(
+    { success: true, message: "Email sent successfully", id: data?.id },
+    { status: 200 }
+  );
+}
   }
 
   // Success response
