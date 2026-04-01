@@ -1,8 +1,6 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: NextRequest) {
   // Validate API key is configured
   if (!process.env.RESEND_API_KEY) {
@@ -12,6 +10,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+
+  // Initialize Resend client with API key from environment
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   let body;
   try {
