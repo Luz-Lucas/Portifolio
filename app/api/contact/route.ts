@@ -42,12 +42,13 @@ export async function POST(request: NextRequest) {
   const idempotencyKey = generateIdempotencyKey(email, Date.now());
 
   // Send email using Resend SDK
-  const { data, error } = await resend.emails.send({
-    from: "onboarding@resend.dev", // Replace with your verified domain: "Lucas <noreply@yourdomain.com>"
-    to: "lucaspmluz@hotmail.com",
-    replyTo: email,
-    subject: `New Contact Form Submission: ${subject}`,
-    html: `
+  const { data, error } = await resend.emails.send(
+    {
+      from: "onboarding@resend.dev", // Replace with your verified domain: "Lucas <noreply@yourdomain.com>"
+      to: "lucaspmluz@hotmail.com",
+      replyTo: email,
+      subject: `New Contact Form Submission: ${subject}`,
+      html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Message from Your Portfolio Contact Form</h2>
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -63,8 +64,9 @@ export async function POST(request: NextRequest) {
         </p>
       </div>
     `,
-    idempotencyKey,
-  });
+    },
+    { idempotencyKey }
+  );
 
   // Handle Resend API errors
   if (error) {
