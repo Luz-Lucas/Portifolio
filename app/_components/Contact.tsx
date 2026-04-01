@@ -41,11 +41,29 @@ function ContactComponent() {
         });
         formElement.reset();
       } else {
-        const error = await response.json();
-        setResponseMessage({
-          type: "error",
-          text: error.error || "Failed to send. Please try again.",
-        });
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const error = await response.json();
+            setResponseMessage({
+              type: "error",
+              text: error.error || "Failed to send. Please try again.",
+            });
+          } else {
+            const text = await response.text();
+            console.error("Non-JSON error response:", text);
+            setResponseMessage({
+              type: "error",
+              text: `Server error (${response.status}). Please try again.`,
+            });
+          }
+        } catch (parseErr) {
+          console.error("Failed to parse error response:", parseErr);
+          setResponseMessage({
+            type: "error",
+            text: "Failed to send. Please try again.",
+          });
+        }
       }
     } catch (err) {
       console.error("Submit error:", err);
